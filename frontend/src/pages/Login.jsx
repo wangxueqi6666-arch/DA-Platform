@@ -42,3 +42,4 @@ const title = { margin: 0, marginBottom: 12 }
 const label = { display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14 }
 const input = { padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 6 }
 const button = { padding: '10px 12px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }
+
