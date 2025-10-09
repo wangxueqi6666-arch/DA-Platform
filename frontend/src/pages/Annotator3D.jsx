@@ -26,6 +26,7 @@ export default function Annotator3D() {
   const [offsets, setOffsets] = useState(Array.from({ length: 11 }, () => ({ x: 0, y: 0 })))
   const [dragIdx, setDragIdx] = useState(null)
   const dragRef = useRef({ startX: 0, startY: 0, origX: 0, origY: 0 })
+  const [actionNotice, setActionNotice] = useState(null)
 
   // 加载后端数据集帧列表，并提取图像 URL（前11张）
   useEffect(() => {
@@ -102,6 +103,15 @@ export default function Annotator3D() {
   const goPrev = () => setCurrentFrame((f) => Math.max(0, f - 1))
   const goNext = () => setCurrentFrame((f) => Math.min(totalFrames - 1, f + 1))
   const setFrame = (idx) => setCurrentFrame(idx)
+
+  const onSave = () => {
+    setActionNotice('已保存更改')
+    setTimeout(() => setActionNotice(null), 2200)
+  }
+  const onSubmit = () => {
+    setActionNotice('已提交到审核员')
+    setTimeout(() => setActionNotice(null), 2200)
+  }
 
   // 拖拽（左键按住）移动单个图片位置
   useEffect(() => {
@@ -216,10 +226,10 @@ export default function Annotator3D() {
       {/* 可拖拽分隔栏 */}
       <div onMouseDown={onDividerMouseDown} style={{ cursor: 'col-resize', background: '#e5e7eb', borderRadius: 4 }} />
 
-      {/* 中间主操作区（默认撑到底部），保存/提交置于右上角 */}
+      {/* 中间主操作区（默认撑到底部），保存/提交置于右上角，工具栏吸顶 */}
       <div style={{ ...panel, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        {/* 顶部工具栏：左侧为信息与选择，右侧为保存/提交 */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+        {/* 顶部工具栏：左侧为信息与选择，右侧为保存/提交（吸顶） */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 0', background: '#fff', borderBottom: '1px solid #e5e7eb', marginBottom: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ fontWeight: 600 }}>点云区域（主操作区）</div>
             <div style={{ color: '#6b7280' }}>当前帧：{currentFrame + 1}/{totalFrames}</div>
@@ -248,9 +258,12 @@ export default function Annotator3D() {
               </select>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button style={btn}>保存</button>
-            <button style={btn}>提交到审核员</button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {actionNotice && (
+              <span style={{ fontSize: 12, color: '#059669', background: '#ecfdf5', border: '1px solid #d1fae5', padding: '4px 8px', borderRadius: 16 }}>{actionNotice}</span>
+            )}
+            <button style={btn} onClick={onSave}>保存</button>
+            <button style={btn} onClick={onSubmit}>提交到审核员</button>
           </div>
         </div>
 
