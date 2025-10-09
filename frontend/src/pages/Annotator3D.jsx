@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { getDatasetFrames, API_BASE } from '../api/client'
+import PointCloudViewer from '../components/PointCloudViewer'
 
 export default function Annotator3D() {
   const containerRef = useRef(null)
@@ -13,14 +15,49 @@ export default function Annotator3D() {
   ])
   const [focused, setFocused] = useState(null)
 
-  // 11V 图像示例（使用本地资源占位）
-  const sampleImgs = Array.from({ length: 11 }, () => '/vite.svg')
-  const [zoomScales, setZoomScales] = useState(sampleImgs.map(() => 1))
+  // 数据集加载状态 & 图像/点云列表
+  const [images, setImages] = useState([])
+  const [pointclouds, setPointclouds] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [loadErr, setLoadErr] = useState(null)
+  const [zoomScales, setZoomScales] = useState(Array.from({ length: 11 }, () => 1))
   const [hoveredIdx, setHoveredIdx] = useState(null)
   const [topIdx, setTopIdx] = useState(null)
-  const [offsets, setOffsets] = useState(sampleImgs.map(() => ({ x: 0, y: 0 })))
+  const [offsets, setOffsets] = useState(Array.from({ length: 11 }, () => ({ x: 0, y: 0 })))
   const [dragIdx, setDragIdx] = useState(null)
   const dragRef = useRef({ startX: 0, startY: 0, origX: 0, origY: 0 })
+
+  // 加载后端数据集帧列表，并提取图像 URL（前11张）
+  useEffect(() => {
+    let mounted = true
+    setLoading(true)
+    getDatasetFrames()
+      .then((data) => {
+        if (!data?.ok) throw new Error(data?.message || '加载数据集失败')
+        const frames = data.frames || []
+        const imgs = frames.filter((f) => f.type === 'image').map((f) => `${API_BASE}${f.url}`)
+        const pcs = frames.filter((f) => f.type === 'pointcloud').map((f) => `${API_BASE}${f.url}`)
+        if (!mounted) return
+        setImages(imgs)
+        setPointclouds(pcs)
+        setLoadErr(null)
+      })
+      .catch((e) => {
+        if (!mounted) return
+        setLoadErr(e?.message || String(e))
+      })
+      .finally(() => mounted && setLoading(false))
+    return () => { mounted = false }
+  }, [])
+
+  // 根据当前显示的图像数量重置缩放与偏移数组长度
+  const displayImgs = images.length ? images.slice(0, 11) : Array.from({ length: 11 }, () => '/vite.svg')
+  useEffect(() => {
+    setZoomScales(Array.from({ length: displayImgs.length }, () => 1))
+    setOffsets(Array.from({ length: displayImgs.length }, () => ({ x: 0, y: 0 })))
+    setHoveredIdx(null)
+    setTopIdx(null)
+  }, [images.length])
 
   // 拖拽分隔栏事件
   const onDividerMouseDown = (e) => {
@@ -100,13 +137,16 @@ export default function Annotator3D() {
         {!leftCollapsed && (
           <div>
             <div style={{ marginBottom: 8, fontWeight: 600 }}>11V 图像</div>
-            {/* 11 张样例图像布局：第一排2张，下面三排每排3张 */}
+            <div style={{ marginBottom: 8, fontSize: 12, color: '#6b7280' }}>
+              {loading ? '正在从后端加载数据集…' : loadErr ? `加载失败：${loadErr}` : images.length ? `已加载 ${images.length} 张图像（显示前11张）` : '未检测到图像，显示占位'}
+            </div>
+            {/* 顶部图像部件：第一排2张，下面三排每排3张 */}
             {(() => {
               const layout = [2, 3, 3, 3]
               let offset = 0
               let gIndex = 0
               return layout.map((cols, ri) => {
-                const items = sampleImgs.slice(offset, offset + cols)
+                const items = displayImgs.slice(offset, offset + cols)
                 offset += cols
                 return (
                   <div key={`row-${ri}`} style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, marginBottom: 8 }}>
@@ -168,6 +208,7 @@ export default function Annotator3D() {
                 )
               })
             })()}
+            
           </div>
         )}
       </div>
@@ -175,16 +216,57 @@ export default function Annotator3D() {
       {/* 可拖拽分隔栏 */}
       <div onMouseDown={onDividerMouseDown} style={{ cursor: 'col-resize', background: '#e5e7eb', borderRadius: 4 }} />
 
-      {/* 中间主操作区 */}
-      <div style={panel}>
-        <div style={{ marginBottom: 8, fontWeight: 600 }}>点云区域（主操作区）</div>
-        <div style={{ marginBottom: 8, color: '#6b7280' }}>当前帧：{currentFrame + 1}/{totalFrames}</div>
-        <div style={cloudBox}>在此进行3D拉框、调整尺寸、移动坐标、设置roll/yaw/pitch等</div>
+      {/* 中间主操作区（默认撑到底部），保存/提交置于右上角 */}
+      <div style={{ ...panel, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        {/* 顶部工具栏：左侧为信息与选择，右侧为保存/提交 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ fontWeight: 600 }}>点云区域（主操作区）</div>
+            <div style={{ color: '#6b7280' }}>当前帧：{currentFrame + 1}/{totalFrames}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: '#6b7280' }}>点云文件：</span>
+              <select
+                value={pointclouds[0] || ''}
+                onChange={(e) => setPointclouds((prev) => {
+                  const next = [...prev]
+                  const idx = next.indexOf(e.target.value)
+                  if (idx > -1) {
+                    next.splice(idx, 1)
+                    next.unshift(e.target.value)
+                  }
+                  return next
+                })}
+                style={{ padding: '6px 8px', border: '1px solid #e5e7eb', borderRadius: 8 }}
+              >
+                {pointclouds.length === 0 ? (
+                  <option value="">未检测到点云</option>
+                ) : (
+                  pointclouds.map((p) => (
+                    <option key={p} value={p}>{p.replace(`${API_BASE}/dataset/`, '')}</option>
+                  ))
+                )}
+              </select>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={btn}>保存</button>
+            <button style={btn}>提交到审核员</button>
+          </div>
+        </div>
+
+        {/* 主体点云显示区填充剩余空间 */}
+        {pointclouds.length > 0 ? (
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <PointCloudViewer src={pointclouds[0]} style={{ height: '100%' }} />
+          </div>
+        ) : (
+          <div style={{ ...cloudBox, flex: 1 }}>未检测到点云文件（支持 .pcd / .ply）</div>
+        )}
+
+        {/* 其他操作按钮保留在底部以不影响主区面积 */}
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
           <button style={btn}>拉框</button>
           <button style={btn}>调整尺寸</button>
-          <button style={btn}>保存</button>
-          <button style={btn}>提交到审核员</button>
         </div>
       </div>
 

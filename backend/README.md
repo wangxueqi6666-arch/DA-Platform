@@ -9,6 +9,10 @@
   - `POST /api/users` 新增示例用户（body: `{ username, email, roles? }`）
   - `PATCH /api/users/:id/status` 更新用户状态（`active`/`disabled`）
 - 帧数接口（示例）：`GET /api/frames` 返回总帧数 `60`
+- 本地数据集（开发阶段）：
+  - 静态资源根：`/dataset`（映射到 `DATASET_DIR`）
+  - 数据集信息：`GET /api/dataset/info`
+  - 帧/资源列表：`GET /api/dataset/frames`
 
 ## 本地运行
 
@@ -24,7 +28,10 @@ npm run dev
 
 ```
 PORT=8080
+DATASET_DIR=/Users/<你的用户名>/Downloads/scene_01
 ```
+
+说明：`DATASET_DIR` 指向本地数据目录，后端会将其暴露为静态资源根 `/dataset`，并通过 `/api/dataset/*` 提供文件列表与摘要信息。若不设置，默认尝试使用 `~/Downloads/scene_01`。
 
 ## Docker 构建与运行
 
