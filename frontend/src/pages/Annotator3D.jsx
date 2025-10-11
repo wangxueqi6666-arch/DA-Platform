@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { getDatasetFrames, API_BASE } from '../api/client'
 import PointCloudViewer from '../components/PointCloudViewer'
 import BoxTriView from '../components/BoxTriView'
+import FramesGridView from '../components/FramesGridView'
 
 export default function Annotator3D() {
   const containerRef = useRef(null)
@@ -33,6 +34,7 @@ export default function Annotator3D() {
   const [actionNotice, setActionNotice] = useState(null)
   const [box, setBox] = useState(null)
   const [points, setPoints] = useState([])
+  const [viewMode, setViewMode] = useState('main') // 'main' | 'grid'
 
   // 页面暗色主题：设置整个页面背景为黑色以降低视觉疲劳
   useEffect(() => {
@@ -326,6 +328,11 @@ export default function Annotator3D() {
                 )}
               </select>
             </div>
+            <div>
+              <button style={{ ...btn, background: '#111827', color: '#e5e7eb', border: '1px solid #374151' }} onClick={() => setViewMode((m) => m === 'main' ? 'grid' : 'main')}>
+                {viewMode === 'main' ? '切换为网格视图' : '返回主视图'}
+              </button>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {actionNotice && (
@@ -336,76 +343,89 @@ export default function Annotator3D() {
           </div>
         </div>
 
-        {/* 主体点云显示区填充剩余空间 */}
-        {pointclouds.length > 0 ? (
-          <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-            <PointCloudViewer
-              src={pointclouds[0]}
-              style={{ height: '100%' }}
-              box={box}
-              onBoxChange={(b) => setBox({ width: b.width, length: b.length, height: b.height, center: { x: b.center.x, y: b.center.y, z: b.center.z } })}
-              onPointsLoaded={setPoints}
-              highlight={showHighlight}
-              onBoxDrawn={onBoxDrawn}
-              annotations={targets}
-              onSelectAnnotation={(id) => {
-                const t = targets.find((x) => x.id === id)
-                if (t?.box) setBox(t.box)
-                setFocused(id)
-              }}
-            />
-            {attrPopup.visible && (
-              <div ref={popupRef} style={{ position: 'absolute', right: 12, top: 12, background: '#0b0b0b', border: '1px solid #1f2937', borderRadius: 10, boxShadow: '0 10px 24px rgba(0,0,0,0.45)', padding: 12, zIndex: 30, minWidth: 260 }}>
-                <div style={{ fontWeight: 600, marginBottom: 8, color: '#e5e7eb' }}>属性选择</div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#e5e7eb' }}>
-                  <span style={{ fontSize: 12, color: '#9ca3af' }}>类型</span>
-                  <select value={attrPopup.type} onChange={(e) => setAttrPopup((p) => ({ ...p, type: e.target.value }))} style={{ padding: '6px 8px', border: '1px solid #374151', borderRadius: 8, background: '#111827', color: '#e5e7eb' }}>
-                    {['小车','卡车','行人','雪糕筒','二轮车'].map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button style={btn} onClick={() => {
-                    if (attrPopup.forId) {
-                      setTargets((prev) => prev.map((x) => x.id === attrPopup.forId ? { ...x, type: attrPopup.type, box } : x))
-                      setAttrPopup({ visible: false, type: '小车', forId: null })
-                      setActionNotice('已更新属性'); setTimeout(() => setActionNotice(null), 1600)
-                    } else {
-                      const nid = `T${targets.length + 1}`
-                      const item = { id: nid, type: attrPopup.type, group: false, ghost: false, box }
-                      setTargets((prev) => [...prev, item])
-                      setFocused(nid)
-                      setAttrPopup({ visible: false, type: '小车', forId: null })
-                      setActionNotice('已新增标注'); setTimeout(() => setActionNotice(null), 1600)
-                    }
-                  }}>保存</button>
-                  <button style={{ ...btn, background: '#111827', color: '#e5e7eb', border: '1px solid #374151' }} onClick={() => setAttrPopup({ visible: false, type: '小车', forId: null })}>取消</button>
+        {/* 主体点云显示区或网格视图填充剩余空间 */}
+        {viewMode === 'main' ? (
+          pointclouds.length > 0 ? (
+            <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+              <PointCloudViewer
+                src={pointclouds[0]}
+                style={{ height: '100%' }}
+                box={box}
+                onBoxChange={(b) => setBox({ width: b.width, length: b.length, height: b.height, center: { x: b.center.x, y: b.center.y, z: b.center.z } })}
+                onPointsLoaded={setPoints}
+                highlight={showHighlight}
+                onBoxDrawn={onBoxDrawn}
+                annotations={targets}
+                onSelectAnnotation={(id) => {
+                  const t = targets.find((x) => x.id === id)
+                  if (t?.box) setBox(t.box)
+                  setFocused(id)
+                }}
+              />
+              {attrPopup.visible && (
+                <div ref={popupRef} style={{ position: 'absolute', right: 12, top: 12, background: '#0b0b0b', border: '1px solid #1f2937', borderRadius: 10, boxShadow: '0 10px 24px rgba(0,0,0,0.45)', padding: 12, zIndex: 30, minWidth: 260 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 8, color: '#e5e7eb' }}>属性选择</div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#e5e7eb' }}>
+                    <span style={{ fontSize: 12, color: '#9ca3af' }}>类型</span>
+                    <select value={attrPopup.type} onChange={(e) => setAttrPopup((p) => ({ ...p, type: e.target.value }))} style={{ padding: '6px 8px', border: '1px solid #374151', borderRadius: 8, background: '#111827', color: '#e5e7eb' }}>
+                      {['小车','卡车','行人','雪糕筒','二轮车'].map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button style={btn} onClick={() => {
+                      if (attrPopup.forId) {
+                        setTargets((prev) => prev.map((x) => x.id === attrPopup.forId ? { ...x, type: attrPopup.type, box } : x))
+                        setAttrPopup({ visible: false, type: '小车', forId: null })
+                        setActionNotice('已更新属性'); setTimeout(() => setActionNotice(null), 1600)
+                      } else {
+                        const nid = `T${targets.length + 1}`
+                        const item = { id: nid, type: attrPopup.type, group: false, ghost: false, box }
+                        setTargets((prev) => [...prev, item])
+                        setFocused(nid)
+                        setAttrPopup({ visible: false, type: '小车', forId: null })
+                        setActionNotice('已新增标注'); setTimeout(() => setActionNotice(null), 1600)
+                      }
+                    }}>保存</button>
+                    <button style={{ ...btn, background: '#111827', color: '#e5e7eb', border: '1px solid #374151' }} onClick={() => setAttrPopup({ visible: false, type: '小车', forId: null })}>取消</button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ ...cloudBox, flex: 1 }}>未检测到点云文件（支持 .pcd / .ply）</div>
+          )
         ) : (
-          <div style={{ ...cloudBox, flex: 1 }}>未检测到点云文件（支持 .pcd / .ply）</div>
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <FramesGridView
+              images={images}
+              box={focused ? (targets.find((x) => x.id === focused)?.box || box) : box}
+              focusedId={focused}
+              onBack={() => setViewMode('main')}
+            />
+          </div>
         )}
 
-        {/* 三视图（靠主操作区下方），用于显示与调整3D框尺寸 */}
-        <div style={{ marginTop: 12 }}>
-          <div style={{ marginBottom: 8, fontWeight: 600 }}>三视图（调整 3D 框尺寸）</div>
-          <BoxTriView
-            box={box}
-            points={points}
-            imageSrc={images[0] || null}
-            onChange={(dims) => setBox((prev) => {
-              const nextCenter = dims.center || prev?.center || { x: 0, y: (dims.height || 1) / 2, z: 0 }
-              const { center: _omitCenter, ...pureDims } = dims
-              const updated = { ...prev, ...pureDims, center: nextCenter }
-              if (focused) {
-                setTargets((prevT) => prevT.map((x) => x.id === focused ? { ...x, box: updated } : x))
-              }
-              return updated
-            })}
-            style={{ background: '#0b0b0b' }}
-          />
-        </div>
+        {/* 三视图模块：仅在主视图模式下显示 */}
+        {viewMode === 'main' && (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ marginBottom: 8, fontWeight: 600 }}>三视图（调整 3D 框尺寸）</div>
+            <BoxTriView
+              box={box}
+              points={points}
+              imageSrc={images[0] || null}
+              onChange={(dims) => setBox((prev) => {
+                const nextCenter = dims.center || prev?.center || { x: 0, y: (dims.height || 1) / 2, z: 0 }
+                const { center: _omitCenter, ...pureDims } = dims
+                const updated = { ...prev, ...pureDims, center: nextCenter }
+                if (focused) {
+                  setTargets((prevT) => prevT.map((x) => x.id === focused ? { ...x, box: updated } : x))
+                }
+                return updated
+              })}
+              style={{ background: '#0b0b0b' }}
+            />
+          </div>
+        )}
 
         {/* 其他操作按钮保留在底部以不影响主区面积 */}
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>

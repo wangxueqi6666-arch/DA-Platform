@@ -40,7 +40,6 @@ export default function Home() {
       title: '系统管理',
       items: [
         { title: '权限管理', desc: '用户、角色与权限配置', path: '/permissions' },
-        { title: '用户管理', desc: '维护平台用户信息', path: '/users' },
       ],
     },
   ]

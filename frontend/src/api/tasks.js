@@ -1,3 +1,5 @@
+import { api, apiPost } from './http'
+
 export async function fetchTasks({ kind, status, type, start, end, tag, page = 1, pageSize = 10 }) {
   const params = new URLSearchParams()
   if (kind) params.append('kind', kind)
@@ -8,63 +10,25 @@ export async function fetchTasks({ kind, status, type, start, end, tag, page = 1
   if (tag) params.append('tag', tag)
   params.append('page', String(page))
   params.append('pageSize', String(pageSize))
-  const res = await fetch(`/api/tasks?${params.toString()}`)
-  const json = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(json.message || '获取任务失败')
-  return json
+  return api(`/api/tasks?${params.toString()}`)
 }
 
 export async function claimTasks({ kind, count, role, status }) {
-  const res = await fetch('/api/tasks/claim', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ kind, count, role, status }),
-  })
-  const json = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(json.message || '领取任务失败')
-  return json
+  return apiPost('/api/tasks/claim', { kind, count, role, status })
 }
 
 export async function submitTask({ id }) {
-  const res = await fetch('/api/tasks/submit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id }),
-  })
-  const json = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(json.message || '提交失败')
-  return json
+  return apiPost('/api/tasks/submit', { id })
 }
 
 export async function reviewTask({ id, action }) {
-  const res = await fetch('/api/tasks/review', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, action }),
-  })
-  const json = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(json.message || '审核操作失败')
-  return json
+  return apiPost('/api/tasks/review', { id, action })
 }
 
 export async function acceptTask({ id, action }) {
-  const res = await fetch('/api/tasks/accept', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, action }),
-  })
-  const json = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(json.message || '验收操作失败')
-  return json
+  return apiPost('/api/tasks/accept', { id, action })
 }
 
 export async function returnTask({ id }) {
-  const res = await fetch('/api/tasks/return', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id }),
-  })
-  const json = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(json.message || '退回失败')
-  return json
+  return apiPost('/api/tasks/return', { id })
 }

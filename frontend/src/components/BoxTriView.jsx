@@ -226,16 +226,6 @@ export default function BoxTriView({ box, points, imageSrc, onChange, style }) {
       <div style={{ border: '1px solid #374151', borderRadius: 8, padding: 10, background: '#0b0b0b' }}>
         <div style={{ fontWeight: 600, marginBottom: 8, color: '#e5e7eb' }}>{title}</div>
         <canvas ref={canvasRef} width={260} height={160} style={{ background: '#111827', border: '1px solid #374151', borderRadius: 6 }} />
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 12, color: '#9ca3af' }}>{labelW}：</span>
-            <input type="number" value={dims[sizeKeys[0]]} min={0.01} step={0.01} onChange={(e) => setDims({ [sizeKeys[0]]: Number(e.target.value) })} style={{ width: 80, padding: '6px 8px', border: '1px solid #374151', borderRadius: 6, background: '#0b0b0b', color: '#e5e7eb' }} />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 12, color: '#9ca3af' }}>{labelH}：</span>
-            <input type="number" value={dims[sizeKeys[1]]} min={0.01} step={0.01} onChange={(e) => setDims({ [sizeKeys[1]]: Number(e.target.value) })} style={{ width: 80, padding: '6px 8px', border: '1px solid #374151', borderRadius: 6, background: '#0b0b0b', color: '#e5e7eb' }} />
-          </div>
-        </div>
       </div>
     )
   }

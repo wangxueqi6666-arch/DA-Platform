@@ -10,7 +10,6 @@ import TrafficLight from './pages/TrafficLight'
 import Stats from './pages/Stats'
 import TruthQuery from './pages/TruthQuery'
 import Permissions from './pages/Permissions'
-import Users from './pages/Users'
 import ProductionManage from './pages/ProductionManage'
 
 function App() {
@@ -44,13 +43,11 @@ function App() {
           <span style={{ fontWeight: 700 }}>DA 标注平台</span>
           <nav style={{ display: 'flex', gap: 12 }}>
             <Link style={navLinkStyle} to="/">主页</Link>
-            <Link style={navLinkStyle} to="/tasks">任务看板</Link>
             <Link style={navLinkStyle} to="/stats">数据统计</Link>
             <Link style={navLinkStyle} to="/truth">真值查询</Link>
             {userInfo?.role === '管理员' && (
               <>
                 <Link style={navLinkStyle} to="/permissions">权限管理</Link>
-                <Link style={navLinkStyle} to="/users">用户管理</Link>
               </>
             )}
           </nav>
@@ -87,7 +84,6 @@ function App() {
           <Route path="/stats" element={<Stats />} />
           <Route path="/truth" element={<TruthQuery />} />
           <Route path="/permissions" element={<Permissions />} />
-          <Route path="/users" element={<Users />} />
       </Routes>
       </main>
     </div>
