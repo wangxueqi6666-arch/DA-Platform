@@ -39,4 +39,3 @@ export default function FramesGridView({ images = [], box, focusedId, onBack }) 
 
 const rowWrap = { display: 'flex', gap: 12, border: '1px solid #1f2937', borderRadius: 10, padding: 12, marginBottom: 12, background: '#0b0b0b' }
 const backBtn = { padding: '8px 10px', background: '#111827', color: '#e5e7eb', border: '1px solid #374151', borderRadius: 6, cursor: 'pointer' }
-

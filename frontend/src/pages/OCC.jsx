@@ -50,4 +50,3 @@ const subBox = { height: 300, border: '1px dashed #cbd5e1', borderRadius: 6, dis
 const cloudBox = { height: 420, border: '1px dashed #cbd5e1', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }
 const btn = { padding: '8px 10px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', marginLeft: 6 }
 const listItem = { border: '1px solid #e5e7eb', borderRadius: 8, padding: 10, marginBottom: 8 }
-
